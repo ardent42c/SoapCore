@@ -163,20 +163,26 @@ namespace SoapCore
 		private async Task ProcessMeta(HttpContext httpContext)
 		{
 			var baseUrl = httpContext.Request.Scheme + "://" + httpContext.Request.Host + httpContext.Request.PathBase + httpContext.Request.Path;
-			var xmlNamespaceManager = GetXmlNamespaceManager(null);
+
+			// ALON: Moved the messageEncoder and xmlNamespaceManager construction to the begining, to share in the MetaBodyWriter and MetaMessage
+			// ALON: This fixes the enum wsdl bug (showing without namespace, starting with : only)
+			//assumption that you want soap12 if your service supports that
+			var messageEncoder = _messageEncoders.FirstOrDefault(me => me.MessageVersion == MessageVersion.Soap12WSAddressing10 || me.MessageVersion == MessageVersion.Soap12WSAddressingAugust2004) ?? _messageEncoders[0];
+			var xmlNamespaceManager = GetXmlNamespaceManager(messageEncoder);
+
 			var bindingName = "BasicHttpBinding_" + _service.GeneralContract.Name;
 
 			var bodyWriter = _options.SoapSerializer == SoapSerializer.XmlSerializer
+				// ALON: using the constracted namespace manager above.
 				? new MetaBodyWriter(_service, baseUrl, xmlNamespaceManager, bindingName, _messageEncoders.Select(me => new SoapBindingInfo(me.MessageVersion, me.BindingName, me.PortName)).ToArray())
 				: (BodyWriter)new MetaWCFBodyWriter(_service, baseUrl, bindingName, _options.UseBasicAuthentication);
 
-			//assumption that you want soap12 if your service supports that
-			var messageEncoder = _messageEncoders.FirstOrDefault(me => me.MessageVersion == MessageVersion.Soap12WSAddressing10 || me.MessageVersion == MessageVersion.Soap12WSAddressingAugust2004) ?? _messageEncoders[0];
 
 			using var responseMessage = new MetaMessage(
 				Message.CreateMessage(messageEncoder.MessageVersion, null, bodyWriter),
 				_service,
-				GetXmlNamespaceManager(messageEncoder),
+				// ALON: using the constracted namespace manager above.
+				xmlNamespaceManager, //GetXmlNamespaceManager(messageEncoder),
 				bindingName,
 				_options.UseBasicAuthentication);
 

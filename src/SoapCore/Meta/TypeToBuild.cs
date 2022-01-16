@@ -15,8 +15,13 @@ namespace SoapCore.Meta
 		}
 
 		public bool IsAnonumous { get; }
-		public Type Type { get; }
+
+		// ALON: Added set to Type, since it changes when using XmlArray and XmlItem.
+		public Type Type { get; set; }
 		public string TypeName { get; set; }
 		public string ChildElementName { get; set; }
+
+		// ALON: Added ChildType for XmlArray support.
+		public Type ChildType { get; set; }
 	}
 }

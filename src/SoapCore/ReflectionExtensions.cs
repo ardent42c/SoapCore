@@ -83,9 +83,9 @@ namespace SoapCore
 		/// <param name="type">The type to look for field or property members for</param>
 		/// <returns>An enumerable containing members which are fields or properties</returns>
 		internal static IEnumerable<MemberInfo> GetPropertyOrFieldMembers(this Type type) =>
-			type.GetFields()
+			type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
 				.Cast<MemberInfo>()
-				.Concat(type.GetProperties());
+				.Concat(type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly));
 
 		/// <summary>
 		/// Gets the field or property type of a member. Returns null if the member is neither a field or

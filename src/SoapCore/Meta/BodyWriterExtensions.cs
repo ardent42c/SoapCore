@@ -230,6 +230,17 @@ namespace SoapCore.Meta
 				typeName = GetArrayTypeName(typeName.Replace("[]", string.Empty), isNullableArray);
 			}
 
+			// ALON: Added Generic support in type name.
+			var idx = typeName.IndexOf('`');
+			if (idx > -1)
+			{
+				typeName = typeName.Substring(0, idx) + "Of";
+				foreach (var genericTypes in type.GenericTypeArguments)
+				{
+					typeName = typeName + genericTypes.Name;
+				}
+			}
+
 			return typeName;
 		}
 
