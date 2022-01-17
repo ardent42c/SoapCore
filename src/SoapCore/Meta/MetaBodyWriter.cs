@@ -872,6 +872,7 @@ namespace SoapCore.Meta
 			}
 
 			var createListWithoutProxyType = false;
+			var name = member.Name;
 			var toBuild = new TypeToBuild(member.GetPropertyOrFieldType());
 
 			var arrayItem = member.GetCustomAttribute<XmlArrayItemAttribute>();
@@ -886,7 +887,10 @@ namespace SoapCore.Meta
 			bool isUnqualified = elementItem?.Form == XmlSchemaForm.Unqualified;
 			if (elementItem != null && !string.IsNullOrWhiteSpace(elementItem.ElementName))
 			{
-				toBuild.ChildElementName = elementItem.ElementName;
+				// ALON: fixed a bug which made all elements of sub type use the same name (duplicates).
+				// ALON: this should change the current element name, not elements of sub type!!
+				//toBuild.ChildElementName = elementItem.ElementName;
+				name = elementItem.ElementName;
 				// ALON: Added condition to not use list without proxy for string enumarable arrays.
 				createListWithoutProxyType = toBuild.Type != typeof(string) && toBuild.Type.IsEnumerableType();
 			}
@@ -909,21 +913,30 @@ namespace SoapCore.Meta
 			var messageBodyMemberAttribute = member.GetCustomAttribute<MessageBodyMemberAttribute>();
 			if (attributeItem != null)
 			{
-				var name = attributeItem.AttributeName;
-				if (string.IsNullOrWhiteSpace(name))
+				//ALON: name already assign, so reverse the condition
+				if (!string.IsNullOrWhiteSpace(attributeItem.AttributeName))
 				{
-					name = member.Name;
+					name = attributeItem.AttributeName;
 				}
-
-				AddSchemaType(writer, toBuild, name, isAttribute: true, isUnqualified: isUnqualified);
+			   /*var name = attributeItem.AttributeName;
+			   if (string.IsNullOrWhiteSpace(name))
+			   {
+				   name = member.Name;
+			   }*/
+			   AddSchemaType(writer, toBuild, name, isAttribute: true, isUnqualified: isUnqualified);
 			}
 			else if (messageBodyMemberAttribute != null)
 			{
-				var name = messageBodyMemberAttribute.Name;
+				//ALON: name already assign, so reverse the condition
+				if (!string.IsNullOrWhiteSpace(messageBodyMemberAttribute.Name))
+				{
+					name = messageBodyMemberAttribute.Name;
+				}
+				/*var name = messageBodyMemberAttribute.Name;
 				if (string.IsNullOrWhiteSpace(name))
 				{
 					name = member.Name;
-				}
+				}*/
 
 				AddSchemaType(writer, toBuild, name, isArray: createListWithoutProxyType, isListWithoutWrapper: createListWithoutProxyType);
 			}
